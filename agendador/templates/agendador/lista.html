@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block nav_agendador %}active{% endblock %}
+{% block container_style %}max-width:1400px;{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Agendador de Tarefas</h2>
+    <a href="{% url 'criar_agendada' %}" class="btn btn-primary btn-sm">+ Novo Agendamento</a>
+</div>
+
+{% if tarefas %}
+<div class="card p-0 overflow-hidden">
+    <table class="table table-hover mb-0" style="font-size:.875rem;">
+        <thead style="background:#f3f4f6; font-size:.8rem; color: var(--cor-texto-suave); text-transform:uppercase; letter-spacing:.04em;">
+            <tr>
+                <th class="px-3 py-2 fw-semibold" style="width:22%;">Nome</th>
+                <th class="px-3 py-2 fw-semibold" style="width:9%;">Módulo</th>
+                <th class="px-3 py-2 fw-semibold" style="width:12%;">Assunto</th>
+                <th class="px-3 py-2 fw-semibold" style="width:13%;">Agendamento</th>
+                <th class="px-3 py-2 fw-semibold" style="width:11%;">Próxima execução</th>
+                <th class="px-3 py-2 fw-semibold" style="width:11%;">Última execução</th>
+                <th class="px-3 py-2 fw-semibold" style="width:7%;">Status</th>
+                <th class="px-3 py-2 fw-semibold text-end">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for t in tarefas %}
+        <tr style="vertical-align:middle;">
+            <td class="px-3 py-3 fw-semibold">
+                {{ t.nome }}
+                {% if t.descricao %}
+                <div class="text-muted fw-normal" style="font-size:.78rem;">{{ t.descricao|truncatechars:120 }}</div>
+                {% endif %}
+            </td>
+            <td class="px-3 py-3 text-muted" style="font-size:.82rem;">
+                {{ t.get_modulo_display|default:"—" }}
+            </td>
+            <td class="px-3 py-3 text-muted" style="font-size:.82rem;">
+                {{ t.assunto|default:"—" }}
+            </td>
+            <td class="px-3 py-3" style="font-size:.85rem;">
+                {{ t.descricao_agendamento }}
+            </td>
+            <td class="px-3 py-3 text-muted">
+                {% if t.proxima_execucao %}
+                    {{ t.proxima_execucao|date:"d/m/Y H:i" }}
+                {% else %}—{% endif %}
+            </td>
+            <td class="px-3 py-3 text-muted">
+                {% if t.ultima_execucao %}
+                    {{ t.ultima_execucao|date:"d/m/Y H:i" }}
+                {% else %}—{% endif %}
+            </td>
+            <td class="px-3 py-3">
+                {% if t.ativa %}
+                    <span class="badge bg-success">Ativa</span>
+                {% else %}
+                    <span class="badge bg-secondary">Inativa</span>
+                {% endif %}
+            </td>
+            <td class="px-3 py-3 text-end">
+                <div class="d-flex gap-2 justify-content-end align-items-center">
+                    <a href="{% url 'executar_agora' t.pk %}" class="icone-acao" title="Executar agora">
+                        <img src="{% static 'icons/executar.png' %}" alt="Executar">
+                    </a>
+                    <a href="{% url 'toggle_agendada' t.pk %}" class="icone-acao" title="{% if t.ativa %}Pausar{% else %}Ativar{% endif %}">
+                        <img src="{% static 'icons/pausar.png' %}" alt="{% if t.ativa %}Pausar{% else %}Ativar{% endif %}"
+                             style="{% if not t.ativa %}opacity:.45; filter:grayscale(1);{% endif %}">
+                    </a>
+                    <a href="{% url 'editar_agendada' t.pk %}" class="icone-acao" title="Editar">
+                        <img src="{% static 'icons/editar.png' %}" alt="Editar">
+                    </a>
+                    <a href="{% url 'excluir_agendada' t.pk %}" class="icone-acao" title="Excluir">
+                        <img src="{% static 'icons/excluir.png' %}" alt="Excluir">
+                    </a>
+                    <a href="{% url 'historico_agendada' t.pk %}" class="icone-acao" title="Ver log">
+                        <img src="{% static 'icons/log.png' %}" alt="Log">
+                    </a>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card p-4 text-center" style="color: var(--cor-texto-suave);">
+    <p class="mb-2">Nenhum agendamento cadastrado ainda.</p>
+    <a href="{% url 'criar_agendada' %}" class="btn btn-primary btn-sm mx-auto" style="width:fit-content;">
+        + Novo Agendamento
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<style>
+    .icone-acao {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: .375rem;
+        transition: background .15s, transform .1s;
+    }
+    .icone-acao img {
+        width: 22px;
+        height: 22px;
+        object-fit: contain;
+    }
+    .icone-acao:hover {
+        background: rgba(0,0,0,.07);
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}

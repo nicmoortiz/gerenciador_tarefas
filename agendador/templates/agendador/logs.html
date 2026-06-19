@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block nav_logs %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Logs de Eventos</h2>
+    <form method="post" action="{% url 'limpar_logs' %}" class="d-flex gap-2 align-items-center">
+        {% csrf_token %}
+        <select name="nivel" class="form-select form-select-sm" style="width:auto;">
+            <option value="">Limpar todos</option>
+            {% for val, label in niveis %}
+            <option value="{{ val }}">Limpar {{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-sm btn-outline-danger"
+            onclick="return confirm('Confirma a limpeza dos logs?')">
+            Limpar
+        </button>
+    </form>
+</div>
+
+<!-- Filtros -->
+<div class="card p-3 mb-4">
+    <form method="get" class="d-flex flex-wrap gap-3 align-items-end">
+        <div>
+            <label class="form-label mb-1">Nível</label>
+            <select name="nivel" class="form-select form-select-sm" style="width:140px;">
+                <option value="">Todos</option>
+                {% for val, label in niveis %}
+                <option value="{{ val }}" {% if filtro_nivel == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1">Origem</label>
+            <select name="origem" class="form-select form-select-sm" style="width:200px;">
+                <option value="">Todas</option>
+                {% for o in origens %}
+                <option value="{{ o }}" {% if filtro_origem == o %}selected{% endif %}>{{ o }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary">Filtrar</button>
+        <a href="{% url 'lista_logs' %}" class="btn btn-sm btn-outline-secondary">Limpar filtros</a>
+    </form>
+</div>
+
+{% if logs %}
+<div class="card p-0 overflow-hidden">
+    <table class="table table-hover mb-0" style="font-size:.85rem;">
+        <thead style="background:#f3f4f6; font-size:.78rem; color: var(--cor-texto-suave); text-transform:uppercase; letter-spacing:.04em;">
+            <tr>
+                <th class="px-3 py-2 fw-semibold" style="width:160px;">Data/Hora</th>
+                <th class="px-3 py-2 fw-semibold" style="width:90px;">Nível</th>
+                <th class="px-3 py-2 fw-semibold" style="width:160px;">Origem</th>
+                <th class="px-3 py-2 fw-semibold">Mensagem</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for log in logs %}
+        <tr>
+            <td class="px-3 py-2 text-muted" style="white-space:nowrap;">{{ log.criado_em|date:"d/m/Y H:i:s" }}</td>
+            <td class="px-3 py-2">
+                {% if log.nivel == 'INFO' %}
+                    <span class="badge bg-primary">INFO</span>
+                {% elif log.nivel == 'WARNING' %}
+                    <span class="badge bg-warning text-dark">WARNING</span>
+                {% elif log.nivel == 'ERROR' or log.nivel == 'CRITICAL' %}
+                    <span class="badge bg-danger">{{ log.nivel }}</span>
+                {% else %}
+                    <span class="badge bg-secondary">{{ log.nivel }}</span>
+                {% endif %}
+            </td>
+            <td class="px-3 py-2 text-muted" style="font-size:.8rem;">{{ log.origem }}</td>
+            <td class="px-3 py-2">{{ log.mensagem }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p class="text-muted mt-2" style="font-size:.8rem;">Exibindo os 200 registros mais recentes.</p>
+{% else %}
+<div class="card p-4 text-center" style="color: var(--cor-texto-suave);">
+    Nenhum log registrado ainda.
+</div>
+{% endif %}
+{% endblock %}

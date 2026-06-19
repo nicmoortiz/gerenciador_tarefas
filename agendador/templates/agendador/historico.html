@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block nav_agendador %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">Histórico de Execuções</h2>
+        <p class="text-muted mb-0" style="font-size:.875rem;">{{ tarefa.nome }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'executar_agora' tarefa.pk %}" class="btn btn-primary btn-sm">▶ Executar agora</a>
+        <a href="{% url 'lista_agendadas' %}" class="btn btn-outline-secondary btn-sm">← Voltar</a>
+    </div>
+</div>
+
+{% if historico %}
+<div class="card p-0 overflow-hidden">
+    <table class="table table-hover mb-0" style="font-size:.875rem;">
+        <thead style="background:#f3f4f6; font-size:.8rem; color: var(--cor-texto-suave); text-transform:uppercase; letter-spacing:.04em;">
+            <tr>
+                <th class="px-3 py-2 fw-semibold">Iniciada em</th>
+                <th class="px-3 py-2 fw-semibold">Duração</th>
+                <th class="px-3 py-2 fw-semibold">Status</th>
+                <th class="px-3 py-2 fw-semibold">Código</th>
+                <th class="px-3 py-2 fw-semibold text-end">Log</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for exec in historico %}
+        <tr>
+            <td class="px-3 py-3">{{ exec.iniciada_em|date:"d/m/Y H:i:s" }}</td>
+            <td class="px-3 py-3 text-muted">{{ exec.duracao|default:"—" }}</td>
+            <td class="px-3 py-3">
+                {% if exec.status == 'sucesso' %}
+                    <span class="badge bg-success">Sucesso</span>
+                {% elif exec.status == 'erro' %}
+                    <span class="badge bg-danger">Erro</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">Rodando</span>
+                {% endif %}
+            </td>
+            <td class="px-3 py-3 text-muted">
+                {% if exec.codigo_retorno is not None %}{{ exec.codigo_retorno }}{% else %}—{% endif %}
+            </td>
+            <td class="px-3 py-3 text-end">
+                <a href="{% url 'detalhe_execucao' exec.pk %}" class="btn btn-sm btn-outline-secondary">Ver log</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card p-4 text-center" style="color: var(--cor-texto-suave);">
+    Nenhuma execução registrada ainda.
+</div>
+{% endif %}
+{% endblock %}

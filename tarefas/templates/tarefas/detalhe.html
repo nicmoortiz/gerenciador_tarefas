@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block nav_tarefas %}active{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">{{ tarefa.titulo }}</h2>
+
+<div class="card p-4 mb-3" style="max-width:560px;">
+    <dl class="row mb-0">
+        <dt class="col-sm-4 text-muted" style="font-size:.875rem;">Prioridade</dt>
+        <dd class="col-sm-8">
+            <span class="badge
+                {% if tarefa.prioridade == 'alta' %}bg-danger
+                {% elif tarefa.prioridade == 'media' %}bg-warning text-dark
+                {% else %}bg-success{% endif %}">
+                {{ tarefa.get_prioridade_display }}
+            </span>
+        </dd>
+        <dt class="col-sm-4 text-muted" style="font-size:.875rem;">Status</dt>
+        <dd class="col-sm-8">
+            {% if tarefa.concluida %}
+                <span class="text-success fw-semibold">Concluída</span>
+            {% else %}
+                <span class="text-muted">Pendente</span>
+            {% endif %}
+        </dd>
+        <dt class="col-sm-4 text-muted" style="font-size:.875rem;">Criada em</dt>
+        <dd class="col-sm-8" style="font-size:.875rem;">{{ tarefa.criada_em|date:"d/m/Y H:i" }}</dd>
+        {% if tarefa.descricao %}
+        <dt class="col-sm-4 text-muted" style="font-size:.875rem;">Descrição</dt>
+        <dd class="col-sm-8" style="font-size:.875rem;">{{ tarefa.descricao }}</dd>
+        {% endif %}
+    </dl>
+</div>
+
+<div class="d-flex gap-2">
+    <a href="{% url 'editar_tarefa' tarefa.pk %}" class="btn btn-primary">Editar</a>
+    <a href="{% url 'excluir_tarefa' tarefa.pk %}" class="btn btn-danger">Excluir</a>
+    <a href="{% url 'lista_tarefas' %}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block nav_tarefas %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Minhas Tarefas</h2>
+    <a href="{% url 'criar_tarefa' %}" class="btn btn-primary btn-sm">+ Nova Tarefa</a>
+</div>
+
+{% if tarefas %}
+<div class="list-group">
+    {% for tarefa in tarefas %}
+    <div class="list-group-item d-flex justify-content-between align-items-center py-3
+        {% if tarefa.concluida %}bg-light{% endif %}">
+        <div>
+            <span class="fw-semibold {% if tarefa.concluida %}text-decoration-line-through text-muted{% endif %}">
+                {{ tarefa.titulo }}
+            </span>
+            <span class="badge ms-2
+                {% if tarefa.prioridade == 'alta' %}bg-danger
+                {% elif tarefa.prioridade == 'media' %}bg-warning text-dark
+                {% else %}bg-success{% endif %}">
+                {{ tarefa.get_prioridade_display }}
+            </span>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'concluir_tarefa' tarefa.pk %}"
+               class="btn btn-sm {% if tarefa.concluida %}btn-outline-secondary{% else %}btn-outline-success{% endif %}">
+                {% if tarefa.concluida %}Reabrir{% else %}Concluir{% endif %}
+            </a>
+            <a href="{% url 'editar_tarefa' tarefa.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+            <a href="{% url 'excluir_tarefa' tarefa.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card p-4 text-center" style="color: var(--cor-texto-suave);">
+    <p class="mb-2">Nenhuma tarefa cadastrada ainda.</p>
+    <a href="{% url 'criar_tarefa' %}" class="btn btn-primary btn-sm mx-auto" style="width:fit-content;">
+        + Criar primeira tarefa
+    </a>
+</div>
+{% endif %}
+{% endblock %}

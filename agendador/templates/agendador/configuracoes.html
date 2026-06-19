@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block nav_config %}active{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Configurações</h2>
+
+<div class="card p-0 overflow-hidden" style="max-width:760px;">
+    <table class="table table-hover mb-0" style="font-size:.9rem;">
+        <thead style="background:#f3f4f6; font-size:.78rem; color: var(--cor-texto-suave); text-transform:uppercase; letter-spacing:.04em;">
+            <tr>
+                <th class="px-3 py-2 fw-semibold">Chave</th>
+                <th class="px-3 py-2 fw-semibold">Valor</th>
+                <th class="px-3 py-2 fw-semibold">Descrição</th>
+                <th class="px-3 py-2 fw-semibold text-end">Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for c in configuracoes %}
+        <tr>
+            <td class="px-3 py-3">
+                <code style="font-size:.82rem; background:#f3f4f6; padding:.15rem .4rem; border-radius:.3rem;">{{ c.chave }}</code>
+            </td>
+            <td class="px-3 py-3">{{ c.valor }}</td>
+            <td class="px-3 py-3 text-muted" style="font-size:.85rem;">{{ c.descricao }}</td>
+            <td class="px-3 py-3 text-end">
+                <a href="{% url 'editar_configuracao' c.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<p class="text-muted mt-3" style="font-size:.8rem;">
+    Novas chaves são adicionadas automaticamente pelo sistema. Credenciais (senhas, tokens) devem permanecer no arquivo <code>.env</code>.
+</p>
+{% endblock %}

@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% block nav_agendador %}active{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">{{ titulo }}</h2>
+
+<div class="card p-4" style="max-width:680px;">
+<form method="post" id="form-agendamento">
+    {% csrf_token %}
+
+    {# ── Identificação ── #}
+    <div class="mb-3">
+        <label class="form-label">Módulo</label>
+        {{ form.modulo }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ form.nome.label }}</label>
+        {{ form.nome }}
+        {% if form.nome.errors %}<div class="text-danger small mt-1">{{ form.nome.errors }}</div>{% endif %}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ form.descricao.label }}</label>
+        {{ form.descricao }}
+    </div>
+
+    {# ── Script ── #}
+    <hr class="my-3">
+    <p class="fw-semibold mb-2" style="font-size:.875rem;">Script Python</p>
+    <div class="mb-3">
+        <label class="form-label">Pasta</label>
+        {{ form.pasta_script }}
+        {% if form.pasta_script.errors %}<div class="text-danger small mt-1">{{ form.pasta_script.errors }}</div>{% endif %}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Nome do script</label>
+        {{ form.nome_script }}
+        {% if form.nome_script.errors %}<div class="text-danger small mt-1">{{ form.nome_script.errors }}</div>{% endif %}
+        <div class="form-text">Apenas o nome do arquivo, ex: <code>meu_script.py</code></div>
+    </div>
+
+    {# ── Tipo de Agendamento ── #}
+    <hr class="my-3">
+    <p class="fw-semibold mb-3" style="font-size:.875rem;">Tipo de Agendamento</p>
+
+    <div class="d-flex flex-wrap gap-2 mb-4" id="div-tipos">
+        {% for val, label in tipos %}
+        <label class="tipo-label" id="label-tipo-{{ val }}">
+            <input type="radio" name="tipo_agendamento" value="{{ val }}" class="tipo-radio visually-hidden"
+                {% if tarefa %}{% if tarefa.tipo_agendamento == val %}checked{% endif %}
+                {% elif val == 'diario' %}checked{% endif %}>
+            {{ label }}
+        </label>
+        {% endfor %}
+    </div>
+
+    {# ── Campos compartilhados ── #}
+
+    {# Data de início — visível para todos #}
+    <div class="mb-3" id="div-data">
+        <label class="form-label" id="label-data">Data de início</label>
+        <input type="date" name="data_inicio" class="form-control" style="max-width:200px;"
+            value="{% if tarefa and tarefa.data_inicio %}{{ tarefa.data_inicio|date:'Y-m-d' }}{% endif %}">
+        <div class="form-text d-none" id="hint-diasuteis" style="color: var(--cor-aviso);">
+            A data de início deve ser um dia útil (segunda a sexta-feira).
+        </div>
+        {% if erros_agend.data_inicio %}<div class="text-danger small mt-1">{{ erros_agend.data_inicio }}</div>{% endif %}
+    </div>
+
+    {# Horário — visível para todos exceto "intervalo" #}
+    <div class="mb-3" id="div-horario">
+        <label class="form-label" id="label-horario">Horário</label>
+        <input type="text" name="horario" class="form-control" style="max-width:160px;"
+            placeholder="HH:MM" maxlength="5"
+            value="{% if tarefa and tarefa.horario %}{{ tarefa.horario|time:'H:i' }}{% else %}08:00{% endif %}">
+        {% if erros_agend.horario %}<div class="text-danger small mt-1">{{ erros_agend.horario }}</div>{% endif %}
+    </div>
+
+    {# ── Seção Semanal ── #}
+    <div id="sec-semanal" class="d-none">
+        <div class="mb-3">
+            <label class="form-label">Dias da semana</label>
+            <div class="d-flex flex-wrap gap-2">
+                {% for val, nome in dias_semana_choices %}
+                <label class="dia-label">
+                    <input type="checkbox" class="check-dia visually-hidden" value="{{ val }}">
+                    {{ nome }}
+                </label>
+                {% endfor %}
+            </div>
+            <input type="hidden" name="dias_semana" id="input-dias-semana"
+                value="{{ tarefa.dias_semana|default:'' }}">
+            {% if erros_agend.dias_semana %}<div class="text-danger small mt-1">{{ erros_agend.dias_semana }}</div>{% endif %}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Repetir a cada</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="number" name="repetir_semanas" class="form-control" min="1" max="52"
+                    style="width:90px;"
+                    value="{{ tarefa.repetir_semanas|default:1 }}">
+                <span class="text-muted" style="font-size:.9rem;">semana(s)</span>
+            </div>
+        </div>
+    </div>
+
+    {# ── Seção Mensal ── #}
+    <div id="sec-mensal" class="d-none">
+        <div class="mb-3">
+            <label class="form-label">Meses</label>
+            <div class="d-flex flex-wrap gap-2 mb-1">
+                {% for val, nome in meses_choices %}
+                <label class="dia-label">
+                    <input type="checkbox" class="check-mes visually-hidden" value="{{ val }}">
+                    {{ nome }}
+                </label>
+                {% endfor %}
+            </div>
+            <input type="hidden" name="meses_execucao" id="input-meses"
+                value="{{ tarefa.meses_execucao|default:'*' }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Dias do mês</label>
+            <div class="d-flex flex-wrap gap-1 mb-2" id="grid-dias-mes">
+                {% for d in dias_mes_range %}
+                <button type="button" class="btn-dia-mes" data-dia="{{ d }}">{{ d }}</button>
+                {% endfor %}
+            </div>
+            <input type="hidden" name="dias_mes" id="input-dias-mes"
+                value="{{ tarefa.dias_mes|default:'' }}">
+            {% if erros_agend.dias_mes %}<div class="text-danger small mt-1">{{ erros_agend.dias_mes }}</div>{% endif %}
+        </div>
+    </div>
+
+    {# ── Seção Intervalo ── #}
+    <div id="sec-intervalo" class="d-none">
+        <div class="mb-3">
+            <label class="form-label">A cada</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="number" name="intervalo_valor" class="form-control" min="1"
+                    style="width:100px;" value="{{ intervalo_valor|default:30 }}">
+                <select name="intervalo_unidade" class="form-select" style="width:140px;">
+                    <option value="minutos" {% if intervalo_unidade == 'minutos' %}selected{% endif %}>Minutos</option>
+                    <option value="horas"   {% if intervalo_unidade == 'horas'   %}selected{% endif %}>Horas</option>
+                </select>
+            </div>
+            {% if erros_agend.intervalo_minutos %}<div class="text-danger small mt-1">{{ erros_agend.intervalo_minutos }}</div>{% endif %}
+        </div>
+    </div>
+
+    {# ── Ativa ── #}
+    <hr class="my-3">
+    <div class="mb-4 d-flex align-items-center gap-2">
+        {{ form.ativa }}
+        <label class="form-label mb-0">{{ form.ativa.label }}</label>
+    </div>
+
+    {# ── Observações ── #}
+    <hr class="my-3">
+    <div class="mb-4">
+        <label class="form-label">Assunto <span class="text-muted fw-normal" style="font-size:.8rem;">(opcional)</span></label>
+        {{ form.assunto }}
+    </div>
+    <div class="mb-4">
+        <label class="form-label">Obs. <span class="text-muted fw-normal" style="font-size:.8rem;">(opcional)</span></label>
+        {{ form.observacoes }}
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a href="{% url 'lista_agendadas' %}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+    /* Radio tipo */
+    .tipo-label {
+        display: inline-flex;
+        align-items: center;
+        padding: .4rem .9rem;
+        border: 1.5px solid var(--cor-borda);
+        border-radius: .5rem;
+        cursor: pointer;
+        font-size: .875rem;
+        font-weight: 500;
+        color: var(--cor-texto-suave);
+        transition: border-color .15s, color .15s, background .15s;
+        user-select: none;
+    }
+    .tipo-label.selecionado {
+        border-color: var(--cor-primaria);
+        color: var(--cor-primaria);
+        background: rgba(79,70,229,.06);
+    }
+
+    /* Checkboxes de dia/mês */
+    .dia-label {
+        display: inline-flex;
+        align-items: center;
+        padding: .35rem .7rem;
+        border: 1.5px solid var(--cor-borda);
+        border-radius: .375rem;
+        cursor: pointer;
+        font-size: .8rem;
+        font-weight: 500;
+        color: var(--cor-texto-suave);
+        transition: border-color .15s, color .15s, background .15s;
+        user-select: none;
+    }
+    .dia-label.selecionado {
+        border-color: var(--cor-primaria);
+        color: var(--cor-primaria);
+        background: rgba(79,70,229,.08);
+    }
+
+    /* Botões de dia do mês */
+    .btn-dia-mes {
+        width: 36px; height: 36px;
+        border: 1.5px solid var(--cor-borda);
+        border-radius: .375rem;
+        background: #fff;
+        font-size: .8rem;
+        font-weight: 500;
+        color: var(--cor-texto-suave);
+        cursor: pointer;
+        transition: border-color .15s, color .15s, background .15s;
+    }
+    .btn-dia-mes.ativo {
+        border-color: var(--cor-primaria);
+        color: var(--cor-primaria);
+        background: rgba(79,70,229,.08);
+    }
+</style>
+
+<script>
+(function () {
+
+    /* ── Dados iniciais (para edição) ─────────────────────────────────── */
+    const tipoInicial    = '{{ tarefa.tipo_agendamento|default:"diario" }}';
+    const diasSemInicial = '{{ tarefa.dias_semana|default:"" }}'.split(',').filter(Boolean);
+    const mesesInicial   = '{{ tarefa.meses_execucao|default:"*" }}'.split(',').filter(Boolean);
+    const diasMesInicial = '{{ tarefa.dias_mes|default:"" }}'.split(',').filter(Boolean);
+
+    /* ── Configuração de visibilidade por tipo ────────────────────────── */
+    const config = {
+        diario:     { horario: true,  data: true,  semanal: false, mensal: false, intervalo: false },
+        dias_uteis: { horario: true,  data: true,  semanal: false, mensal: false, intervalo: false },
+        uma_vez:    { horario: true,  data: true,  semanal: false, mensal: false, intervalo: false },
+        semanal:    { horario: true,  data: true,  semanal: true,  mensal: false, intervalo: false },
+        mensal:     { horario: true,  data: true,  semanal: false, mensal: true,  intervalo: false },
+        intervalo:  { horario: false, data: true,  semanal: false, mensal: false, intervalo: true  },
+    };
+
+    const labelData = {
+        diario: 'Data de início', dias_uteis: 'Data de início',
+        uma_vez: 'Data de execução', semanal: 'Data de início',
+        mensal: 'Data de início', intervalo: 'Data de início (opcional)',
+    };
+
+    /* ── Atualiza visibilidade ────────────────────────────────────────── */
+    function atualizar(tipo) {
+        const c = config[tipo] || config.diario;
+
+        toggle('div-horario', c.horario);
+        toggle('div-data',    c.data);
+        toggle('sec-semanal', c.semanal);
+        toggle('sec-mensal',  c.mensal);
+        toggle('sec-intervalo', c.intervalo);
+        toggle('hint-diasuteis', tipo === 'dias_uteis');
+
+        document.getElementById('label-data').textContent = labelData[tipo] || 'Data de início';
+
+        // Marca o label do radio selecionado
+        document.querySelectorAll('.tipo-label').forEach(l => l.classList.remove('selecionado'));
+        const radio = document.querySelector(`.tipo-radio[value="${tipo}"]`);
+        if (radio) radio.closest('.tipo-label').classList.add('selecionado');
+    }
+
+    function toggle(id, visivel) {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('d-none', !visivel);
+    }
+
+    /* ── Radios ─────────────────────────────────────────────────────────── */
+    document.querySelectorAll('.tipo-radio').forEach(r => {
+        r.addEventListener('change', () => atualizar(r.value));
+        r.closest('.tipo-label').addEventListener('click', () => {
+            r.checked = true;
+            atualizar(r.value);
+        });
+    });
+
+    /* ── Checkboxes de dia da semana ─────────────────────────────────── */
+    function syncDiasSemana() {
+        const vals = [...document.querySelectorAll('.check-dia:checked')].map(c => c.value);
+        document.getElementById('input-dias-semana').value = vals.join(',');
+    }
+
+    document.querySelectorAll('.check-dia').forEach(cb => {
+        cb.addEventListener('change', () => {
+            cb.closest('.dia-label').classList.toggle('selecionado', cb.checked);
+            syncDiasSemana();
+        });
+    });
+
+    /* ── Checkboxes de mês ────────────────────────────────────────────── */
+    function syncMeses() {
+        const vals = [...document.querySelectorAll('.check-mes:checked')].map(c => c.value);
+        document.getElementById('input-meses').value = vals.length ? vals.join(',') : '*';
+    }
+
+    document.querySelectorAll('.check-mes').forEach(cb => {
+        cb.addEventListener('change', () => {
+            cb.closest('.dia-label').classList.toggle('selecionado', cb.checked);
+            syncMeses();
+        });
+    });
+
+    /* ── Botões de dia do mês ─────────────────────────────────────────── */
+    function syncDiasMes() {
+        const vals = [...document.querySelectorAll('.btn-dia-mes.ativo')].map(b => b.dataset.dia);
+        document.getElementById('input-dias-mes').value = vals.join(',');
+    }
+
+    document.querySelectorAll('.btn-dia-mes').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.classList.toggle('ativo');
+            syncDiasMes();
+        });
+    });
+
+    /* ── Pré-popular campos para edição ─────────────────────────────── */
+    diasSemInicial.forEach(dia => {
+        const cb = document.querySelector(`.check-dia[value="${dia}"]`);
+        if (cb) { cb.checked = true; cb.closest('.dia-label').classList.add('selecionado'); }
+    });
+
+    const todosMeses = mesesInicial.length === 0 || mesesInicial[0] === '*';
+    document.querySelectorAll('.check-mes').forEach(cb => {
+        const marcado = todosMeses || mesesInicial.includes(cb.value);
+        if (marcado) { cb.checked = true; cb.closest('.dia-label').classList.add('selecionado'); }
+    });
+    syncMeses();
+
+    diasMesInicial.forEach(dia => {
+        const btn = document.querySelector(`.btn-dia-mes[data-dia="${dia}"]`);
+        if (btn) btn.classList.add('ativo');
+    });
+
+    /* ── Inicializa com o tipo atual ─────────────────────────────────── */
+    atualizar(tipoInicial);
+
+    /* ── Validação do campo Horário ──────────────────────────────────── */
+    const inputHorario = document.querySelector('input[name="horario"]');
+    const erroHorario  = document.createElement('div');
+    erroHorario.className = 'text-danger small mt-1';
+    erroHorario.style.display = 'none';
+    inputHorario.parentNode.insertBefore(erroHorario, inputHorario.nextSibling);
+
+    function validarHorario(valor) {
+        if (!valor.trim()) return '';
+        const match = valor.match(/^(\d{1,2}):(\d{2})$/);
+        if (!match) return 'Formato inválido. Use HH:MM.';
+        const h = parseInt(match[1], 10), m = parseInt(match[2], 10);
+        if (h < 0 || h > 23) return 'Hora deve ser entre 00 e 23.';
+        if (m < 0 || m > 59) return 'Minuto deve ser entre 00 e 59.';
+        return '';
+    }
+
+    inputHorario.addEventListener('input', () => {
+        const msg = validarHorario(inputHorario.value);
+        erroHorario.textContent = msg;
+        erroHorario.style.display = msg ? '' : 'none';
+        inputHorario.style.borderColor = msg ? 'var(--cor-erro, #dc2626)' : '';
+    });
+
+    inputHorario.addEventListener('blur', () => {
+        const val = inputHorario.value.trim();
+        if (!val) return;
+        const match = val.match(/^(\d{1,2}):(\d{2})$/);
+        if (match) {
+            inputHorario.value = String(parseInt(match[1], 10)).padStart(2, '0') + ':' + match[2];
+        }
+    });
+
+    document.getElementById('form-agendamento').addEventListener('submit', function (e) {
+        const divHorario = document.getElementById('div-horario');
+        if (divHorario && !divHorario.classList.contains('d-none')) {
+            const msg = validarHorario(inputHorario.value);
+            if (msg) {
+                e.preventDefault();
+                erroHorario.textContent = msg;
+                erroHorario.style.display = '';
+                inputHorario.style.borderColor = 'var(--cor-erro, #dc2626)';
+                inputHorario.focus();
+            }
+        }
+    });
+
+})();
+</script>
+{% endblock %}

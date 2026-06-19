@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block nav_tarefas %}active{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Excluir Tarefa</h2>
+
+<div class="card p-4" style="max-width:480px;">
+    <p style="font-size:.95rem;">
+        Tem certeza que deseja excluir a tarefa <strong>{{ tarefa.titulo }}</strong>?
+        Esta ação não pode ser desfeita.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-danger">Sim, excluir</button>
+            <a href="{% url 'lista_tarefas' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

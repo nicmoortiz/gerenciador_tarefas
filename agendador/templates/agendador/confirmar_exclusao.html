@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block nav_agendador %}active{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Excluir Tarefa Agendada</h2>
+
+<div class="card p-4" style="max-width:480px;">
+    <p style="font-size:.95rem;">
+        Tem certeza que deseja excluir <strong>{{ tarefa.nome }}</strong>?
+        Todo o histórico de execuções será removido junto. Esta ação não pode ser desfeita.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-danger">Sim, excluir</button>
+            <a href="{% url 'lista_agendadas' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

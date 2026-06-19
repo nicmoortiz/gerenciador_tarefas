@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block nav_agendador %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">Detalhe da Execução</h2>
+        <p class="text-muted mb-0" style="font-size:.875rem;">{{ execucao.tarefa.nome }}</p>
+    </div>
+    <a href="{% url 'historico_agendada' execucao.tarefa.pk %}" class="btn btn-outline-secondary btn-sm">← Histórico</a>
+</div>
+
+<div class="card p-4 mb-3" style="max-width:720px;">
+    <dl class="row mb-0" style="font-size:.875rem;">
+        <dt class="col-sm-4 text-muted">Status</dt>
+        <dd class="col-sm-8">
+            {% if execucao.status == 'sucesso' %}
+                <span class="badge bg-success">Sucesso</span>
+            {% elif execucao.status == 'erro' %}
+                <span class="badge bg-danger">Erro</span>
+            {% else %}
+                <span class="badge bg-warning text-dark">Rodando</span>
+            {% endif %}
+        </dd>
+
+        <dt class="col-sm-4 text-muted">Iniciada em</dt>
+        <dd class="col-sm-8">{{ execucao.iniciada_em|date:"d/m/Y H:i:s" }}</dd>
+
+        <dt class="col-sm-4 text-muted">Finalizada em</dt>
+        <dd class="col-sm-8">
+            {% if execucao.finalizada_em %}{{ execucao.finalizada_em|date:"d/m/Y H:i:s" }}{% else %}—{% endif %}
+        </dd>
+
+        <dt class="col-sm-4 text-muted">Duração</dt>
+        <dd class="col-sm-8">{{ execucao.duracao|default:"—" }}</dd>
+
+        <dt class="col-sm-4 text-muted">Código de retorno</dt>
+        <dd class="col-sm-8">
+            {% if execucao.codigo_retorno is not None %}{{ execucao.codigo_retorno }}{% else %}—{% endif %}
+        </dd>
+    </dl>
+</div>
+
+{% if execucao.saida %}
+<div class="mb-3" style="max-width:720px;">
+    <p class="fw-semibold mb-1" style="font-size:.875rem;">Saída (stdout)</p>
+    <div class="log-block">{{ execucao.saida }}</div>
+</div>
+{% endif %}
+
+{% if execucao.erro %}
+<div class="mb-3" style="max-width:720px;">
+    <p class="fw-semibold mb-1" style="font-size:.875rem; color: var(--cor-perigo);">Erros (stderr)</p>
+    <div class="log-block" style="border-left: 3px solid var(--cor-perigo);">{{ execucao.erro }}</div>
+</div>
+{% endif %}
+
+{% if not execucao.saida and not execucao.erro %}
+<div class="card p-3 text-muted" style="font-size:.875rem; max-width:720px;">
+    Nenhuma saída registrada.
+</div>
+{% endif %}
+{% endblock %}
