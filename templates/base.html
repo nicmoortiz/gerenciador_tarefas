@@ -43,33 +43,82 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--cor-fundo);
+            background-color: #fff;
             color: var(--cor-texto);
         }
 
         /* ── Navbar ── */
         .navbar {
-            background-color: var(--cor-primaria) !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,.15);
+            background-color: #272F5D !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,.25);
+            padding-top: .5rem;
+            padding-bottom: .5rem;
         }
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.05rem;
-            letter-spacing: -.01em;
+        .navbar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .navbar-logo img {
+            height: 42px;
+            width: auto;
+            display: block;
+        }
+        .navbar-setor {
+            color: rgba(255,255,255,.85);
+            font-size: .82rem;
+            font-weight: 500;
+            letter-spacing: .01em;
+        }
+
+        /* ── Barra de navegação (abaixo da navbar) ── */
+        .topnav {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: .45rem 0;
+        }
+        .topnav-inner {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 6px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
         }
         .nav-link-custom {
-            color: rgba(255,255,255,.75);
-            font-size: .875rem;
+            color: #374151;
+            font-size: .78rem;
             font-weight: 500;
-            padding: .3rem .75rem;
-            border-radius: .375rem;
+            padding: .25rem .85rem;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
             text-decoration: none;
-            transition: background .15s, color .15s;
+            transition: background .15s, color .15s, border-color .15s;
+            white-space: nowrap;
         }
-        .nav-link-custom:hover,
+        .nav-link-custom:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
         .nav-link-custom.active {
+            background: #272F5D;
             color: #fff;
-            background-color: rgba(255,255,255,.15);
+            border-color: #272F5D;
+        }
+
+        /* ── Cabeçalho fixo ── */
+        .site-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+        }
+        body {
+            padding-top: 96px; /* altura navbar (~58px) + topnav (~38px) */
         }
 
         /* ── Typography ── */
@@ -120,6 +169,25 @@
         /* ── Badges ── */
         .badge { font-size: .75rem; font-weight: 500; }
 
+        /* ── Tabelas ── */
+        table { border-collapse: collapse; width: 100%; }
+        thead th {
+            background-color: #272F5D;
+            color: #fff;
+            border: 1px solid #C4C4C4;
+            padding: 6px 10px;
+            font-weight: 500;
+            font-size: .78rem;
+            text-align: left;
+        }
+        tbody tr:nth-child(odd)  td { background-color: #FFFFFF; }
+        tbody tr:nth-child(even) td { background-color: #D9D9D9; }
+        tbody td {
+            border: 1px solid #C4C4C4;
+            padding: 6px 10px;
+            font-size: .78rem;
+        }
+
         /* ── Code block (para logs) ── */
         .log-block {
             background-color: #1e1e2e;
@@ -136,33 +204,38 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark mb-4">
-        <div class="container d-flex align-items-center gap-3" style="max-width:960px;">
-            <a class="navbar-brand me-3" href="/">Gerenciador</a>
-            <a href="{% url 'lista_tarefas' %}"
-               class="nav-link-custom {% block nav_tarefas %}{% endblock %}">
-                Tarefas
-            </a>
-            <a href="{% url 'lista_agendadas' %}"
-               class="nav-link-custom {% block nav_agendador %}{% endblock %}">
-                Agendador
-            </a>
-            <a href="{% url 'lista_logs' %}"
-               class="nav-link-custom {% block nav_logs %}{% endblock %}">
-                Logs
-            </a>
-            <a href="{% url 'lista_configuracoes' %}"
-               class="nav-link-custom {% block nav_config %}{% endblock %}">
-                Configurações
-            </a>
-            <a href="{% url 'lista_paineis' %}"
-               class="nav-link-custom {% block nav_paineis %}{% endblock %}">
-                Painéis
-            </a>
+    <header class="site-header">
+        <nav class="navbar navbar-dark">
+            <div class="navbar-inner">
+                <a href="/" class="navbar-logo">
+                    <img src="{% static 'img/logo_cross_branco.png' %}" alt="CROSS">
+                </a>
+                <span class="navbar-setor">Setor de Informação</span>
+            </div>
+        </nav>
+        <div class="topnav">
+            <div class="topnav-inner">
+                <a href="{% url 'lista_paineis' %}"
+                   class="nav-link-custom {% block nav_paineis %}{% endblock %}">
+                    Gestão de Painéis
+                </a>
+                <a href="{% url 'lista_agendadas' %}"
+                   class="nav-link-custom {% block nav_agendador %}{% endblock %}">
+                    Agendamentos de Tarefas
+                </a>
+                <a href="{% url 'lista_logs' %}"
+                   class="nav-link-custom {% block nav_logs %}{% endblock %}">
+                    Logs
+                </a>
+                <a href="{% url 'lista_tarefas' %}"
+                   class="nav-link-custom {% block nav_tarefas %}{% endblock %}">
+                    Tarefas
+                </a>
+            </div>
         </div>
-    </nav>
+    </header>
 
-    <div class="container" style="{% block container_style %}max-width:960px;{% endblock %}">
+    <div class="container mt-4" style="{% block container_style %}max-width:1200px;{% endblock %}">
         {% if messages %}
         <div class="mb-3">
             {% for msg in messages %}
