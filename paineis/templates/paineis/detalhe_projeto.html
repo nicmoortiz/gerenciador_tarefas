@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% block nav_paineis %}active{% endblock %}
+{% block title %}{{ projeto.nome }}{% endblock %}
+{% block container_style %}max-width:1140px;{% endblock %}
+
+{% block content %}
+<div class="mb-3" style="font-size:.85rem; color:var(--cor-texto-suave);">
+    <a href="{% url 'lista_projetos' %}" class="text-decoration-none" style="color:var(--cor-texto-suave);">Gestão de Painéis</a>
+    <span class="mx-1">/</span> {{ projeto.nome }}
+</div>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <h2 class="mb-0">{{ projeto.nome }}</h2>
+    <div class="d-flex gap-2">
+        {% if pasta %}
+        <a href="{% url 'exportar_word' projeto.pk %}" class="btn btn-sm btn-outline-secondary">&#8595; Exportar Word</a>
+        {% endif %}
+        <a href="{% url 'excluir_projeto' projeto.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+    </div>
+</div>
+
+<!-- Abas -->
+<ul class="nav nav-tabs mb-0" style="border-bottom: 2px solid var(--cor-borda);">
+
+    <li class="nav-item">
+        <a class="nav-link {% if aba == 'projeto' %}active{% endif %}"
+           href="{% url 'detalhe_projeto' projeto.pk %}?aba=projeto">
+            Projeto
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link {% if aba == 'dados' %}active{% endif %}"
+           href="{% url 'detalhe_projeto' projeto.pk %}?aba=dados">
+            Dados do Tableau
+            {% if pasta %}<span class="ms-1" style="color:#16a34a; font-size:.8rem;">&#10003;</span>{% endif %}
+        </a>
+    </li>
+
+    {% if pasta %}
+    <li class="nav-item">
+        <a class="nav-link {% if aba == 'fontes' %}active{% endif %}"
+           href="{% url 'detalhe_projeto' projeto.pk %}?aba=fontes">
+            Fonte de Dados
+            <span class="badge bg-secondary ms-1" style="font-size:.7rem;">{{ fontes|length }}</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if aba == 'planilhas' %}active{% endif %}"
+           href="{% url 'detalhe_projeto' projeto.pk %}?aba=planilhas">
+            Planilha
+            <span class="badge bg-secondary ms-1" style="font-size:.7rem;">{{ planilhas|length }}</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if aba == 'paineis' %}active{% endif %}"
+           href="{% url 'detalhe_projeto' projeto.pk %}?aba=paineis">
+            Painel
+            <span class="badge bg-secondary ms-1" style="font-size:.7rem;">{{ paineis_list|length }}</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if aba == 'historias' %}active{% endif %}"
+           href="{% url 'detalhe_projeto' projeto.pk %}?aba=historias">
+            História
+            <span class="badge bg-secondary ms-1" style="font-size:.7rem;">{{ historias|length }}</span>
+        </a>
+    </li>
+    {% else %}
+    <li class="nav-item"><a class="nav-link disabled text-muted" tabindex="-1">Fonte de Dados</a></li>
+    <li class="nav-item"><a class="nav-link disabled text-muted" tabindex="-1">Planilha</a></li>
+    <li class="nav-item"><a class="nav-link disabled text-muted" tabindex="-1">Painel</a></li>
+    <li class="nav-item"><a class="nav-link disabled text-muted" tabindex="-1">História</a></li>
+    {% endif %}
+</ul>
+
+<div class="card" style="border-top:none; border-radius:0 0 .75rem .75rem;">
+
+    <!-- ── ABA: PROJETO ── -->
+    {% if aba == 'projeto' %}
+    <div class="p-4">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="projeto">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nome <span class="text-danger">*</span></label>
+                    {{ projeto_form.nome }}
+                    {% if projeto_form.nome.errors %}<div class="text-danger" style="font-size:.8rem;">{{ projeto_form.nome.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Descrição</label>
+                    {{ projeto_form.descricao }}
+                    {% if projeto_form.descricao.errors %}<div class="text-danger" style="font-size:.8rem;">{{ projeto_form.descricao.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Salvar alterações</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ── ABA: DADOS DO TABLEAU ── -->
+    {% elif aba == 'dados' %}
+    <div class="p-4">
+        {% if not pasta %}
+        <p class="text-muted mb-3" style="font-size:.875rem;">
+            Preencha os dados do Tableau para liberar as demais abas.
+        </p>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="dados">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nome <span class="text-danger">*</span></label>
+                    {{ form.nome }}
+                    {% if form.nome.errors %}<div class="text-danger" style="font-size:.8rem;">{{ form.nome.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Módulo</label>
+                    {{ form.modulo }}
+                </div>
+                <div class="col-md-12" id="campo_modulo_outro" style="display:none;">
+                    <label class="form-label">Qual módulo?</label>
+                    {{ form.modulo_outro }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Local Tableau Server</label>
+                    {{ form.local_tableau_server }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Setor Solicitante</label>
+                    {{ form.setor_solicitante }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Solicitante</label>
+                    {{ form.solicitante }}
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">
+                    {% if pasta %}Salvar alterações{% else %}Salvar e avançar{% endif %}
+                </button>
+                {% if pasta %}
+                <a href="{% url 'excluir_pasta' pasta.pk %}" class="btn btn-outline-danger btn-sm ms-auto">Limpar dados do Tableau</a>
+                {% endif %}
+            </div>
+        </form>
+
+        {% if pasta and registros %}
+        <hr class="my-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-semibold" style="font-size:.875rem;">Histórico de Desenvolvimento</span>
+            <a href="{% url 'adicionar_registro' pasta.pk %}" class="btn btn-sm btn-outline-primary" style="font-size:.78rem;">+ Atualização</a>
+        </div>
+        <table class="table table-sm" style="font-size:.83rem; max-width:540px;">
+            <tbody>
+            {% for reg in registros %}
+            <tr>
+                <td class="text-muted" style="width:38%;">{% if forloop.first %}Desenvolvido por{% else %}Atualizado por{% endif %}</td>
+                <td>{{ reg.nome }}</td>
+                <td>{{ reg.data|date:"d/m/Y" }}</td>
+                <td class="text-end">
+                    {% if not forloop.first %}
+                    <a href="{% url 'excluir_registro' reg.pk %}" class="text-danger" style="font-size:.75rem; text-decoration:none;" title="Excluir">&#215;</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% elif pasta %}
+        <hr class="my-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-semibold" style="font-size:.875rem;">Histórico de Desenvolvimento</span>
+            <a href="{% url 'adicionar_registro' pasta.pk %}" class="btn btn-sm btn-outline-primary" style="font-size:.78rem;">+ Atualização</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── ABA: FONTES DE DADOS ── -->
+    {% elif aba == 'fontes' %}
+    <div class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-semibold" style="font-size:.9rem;">Fontes de Dados</span>
+            <a href="{% url 'criar_fonte' pasta.pk %}" class="btn btn-sm btn-primary">+ Nova Fonte</a>
+        </div>
+        {% if fontes %}
+        <div class="list-group">
+            {% for fonte in fontes %}
+            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                <div>
+                    <a href="{% url 'detalhe_fonte' fonte.pk %}" class="fw-semibold text-decoration-none" style="color:var(--cor-texto);">{{ fonte.nome }}</a>
+                    <div style="font-size:.8rem; color:var(--cor-texto-suave);">
+                        {% if fonte.conexao %}{{ fonte.conexao }}{% if fonte.banco %} / {{ fonte.banco }}{% endif %} &bull; {% endif %}
+                        {{ fonte.get_tipo_conexao_display }} &bull;
+                        {{ fonte.filtros.count }} filtro{{ fonte.filtros.count|pluralize }} &bull;
+                        {{ fonte.imagens.count }} imagem{{ fonte.imagens.count|pluralize:"ns" }}
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'detalhe_fonte' fonte.pk %}" class="btn btn-sm btn-outline-primary">Abrir</a>
+                    <a href="{% url 'excluir_fonte' fonte.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center" style="color:var(--cor-texto-suave); font-size:.875rem;">Nenhuma fonte cadastrada.</p>
+        {% endif %}
+    </div>
+
+    <!-- ── ABA: PLANILHAS ── -->
+    {% elif aba == 'planilhas' %}
+    <div class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-semibold" style="font-size:.9rem;">Planilhas</span>
+            <a href="{% url 'criar_planilha' pasta.pk %}" class="btn btn-sm btn-primary">+ Nova Planilha</a>
+        </div>
+        {% if planilhas %}
+        <div class="list-group">
+            {% for planilha in planilhas %}
+            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                <div>
+                    <a href="{% url 'detalhe_planilha' planilha.pk %}" class="fw-semibold text-decoration-none" style="color:var(--cor-texto);">{{ planilha.nome }}</a>
+                    <div style="font-size:.8rem; color:var(--cor-texto-suave);">
+                        {{ planilha.imagens.count }} imagem{{ planilha.imagens.count|pluralize:"ns" }}
+                        {% if planilha.descricao %} &bull; {{ planilha.descricao|truncatechars:60 }}{% endif %}
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'detalhe_planilha' planilha.pk %}" class="btn btn-sm btn-outline-primary">Abrir</a>
+                    <a href="{% url 'excluir_planilha' planilha.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center" style="color:var(--cor-texto-suave); font-size:.875rem;">Nenhuma planilha cadastrada.</p>
+        {% endif %}
+    </div>
+
+    <!-- ── ABA: PAINÉIS ── -->
+    {% elif aba == 'paineis' %}
+    <div class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-semibold" style="font-size:.9rem;">Painéis</span>
+            <a href="{% url 'criar_painel' pasta.pk %}" class="btn btn-sm btn-primary">+ Novo Painel</a>
+        </div>
+        {% if paineis_list %}
+        <div class="list-group">
+            {% for painel in paineis_list %}
+            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                <div>
+                    <a href="{% url 'detalhe_painel' painel.pk %}" class="fw-semibold text-decoration-none" style="color:var(--cor-texto);">{{ painel.nome }}</a>
+                    <div style="font-size:.8rem; color:var(--cor-texto-suave);">
+                        {{ painel.planilhas.count }} planilha{{ painel.planilhas.count|pluralize }} &bull;
+                        {{ painel.imagens.count }} imagem{{ painel.imagens.count|pluralize:"ns" }}
+                        {% if painel.descricao %} &bull; {{ painel.descricao|truncatechars:60 }}{% endif %}
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'detalhe_painel' painel.pk %}" class="btn btn-sm btn-outline-primary">Abrir</a>
+                    <a href="{% url 'excluir_painel' painel.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center" style="color:var(--cor-texto-suave); font-size:.875rem;">Nenhum painel cadastrado.</p>
+        {% endif %}
+    </div>
+
+    <!-- ── ABA: HISTÓRIAS ── -->
+    {% elif aba == 'historias' %}
+    <div class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-semibold" style="font-size:.9rem;">Histórias</span>
+            <a href="{% url 'criar_historia' pasta.pk %}" class="btn btn-sm btn-primary">+ Nova História</a>
+        </div>
+        {% if historias %}
+        <div class="list-group">
+            {% for historia in historias %}
+            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                <div>
+                    <a href="{% url 'detalhe_historia' historia.pk %}" class="fw-semibold text-decoration-none" style="color:var(--cor-texto);">{{ historia.nome }}</a>
+                    <div style="font-size:.8rem; color:var(--cor-texto-suave);">
+                        {{ historia.imagens.count }} imagem{{ historia.imagens.count|pluralize:"ns" }}
+                        {% if historia.descricao %} &bull; {{ historia.descricao|truncatechars:60 }}{% endif %}
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'detalhe_historia' historia.pk %}" class="btn btn-sm btn-outline-primary">Abrir</a>
+                    <a href="{% url 'excluir_historia' historia.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center" style="color:var(--cor-texto-suave); font-size:.875rem;">Nenhuma história cadastrada.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const sel = document.getElementById('id_modulo');
+    if (!sel) return;
+    const campo = document.getElementById('campo_modulo_outro');
+    function toggle() { campo.style.display = sel.value === 'outros' ? 'block' : 'none'; }
+    sel.addEventListener('change', toggle);
+    toggle();
+})();
+</script>
+{% endblock %}

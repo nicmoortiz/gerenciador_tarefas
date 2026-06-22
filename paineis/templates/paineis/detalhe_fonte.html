@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block nav_paineis %}active{% endblock %}
+{% block title %}{{ fonte.nome }}{% endblock %}
+{% block container_style %}max-width:1140px;{% endblock %}
+
+{% block content %}
+<div class="mb-3" style="font-size:.85rem; color:var(--cor-texto-suave);">
+    <a href="{% url 'lista_projetos' %}" class="text-decoration-none" style="color:var(--cor-texto-suave);">Gestão de Painéis</a>
+    <span class="mx-1">/</span>
+    <a href="{% url 'detalhe_projeto' projeto.pk %}?aba=fontes" class="text-decoration-none" style="color:var(--cor-texto-suave);">{{ projeto.nome }}</a>
+    <span class="mx-1">/</span> {{ fonte.nome }}
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">{{ fonte.nome }}</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'editar_fonte' fonte.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+        <a href="{% url 'excluir_fonte' fonte.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+        <a href="{% url 'detalhe_projeto' projeto.pk %}?aba=fontes" class="btn btn-sm btn-outline-secondary">Voltar</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Coluna esquerda -->
+    <div class="col-lg-7">
+        <!-- Info da conexão -->
+        <div class="card p-3 mb-3">
+            <div class="row g-3 mb-3">
+                <div class="col-sm-4">
+                    <label class="form-label mb-1">Conexão</label>
+                    <div class="form-control bg-light" style="min-height:38px;">{{ fonte.conexao|default:"-" }}</div>
+                </div>
+                <div class="col-sm-4">
+                    <label class="form-label mb-1">Banco</label>
+                    <div class="form-control bg-light" style="min-height:38px;">{{ fonte.banco|default:"-" }}</div>
+                </div>
+                <div class="col-sm-4">
+                    <label class="form-label mb-1">Nome</label>
+                    <div class="form-control bg-light" style="min-height:38px;">{{ fonte.nome }}</div>
+                </div>
+            </div>
+            <div>
+                <label class="form-label mb-1">Tipo de Conexão</label>
+                <div class="d-flex gap-3">
+                    <span class="{% if fonte.tipo_conexao == 'tempo_real' %}fw-semibold{% else %}text-muted{% endif %}" style="font-size:.875rem;">
+                        Em tempo real
+                    </span>
+                    <span class="{% if fonte.tipo_conexao == 'extracao' %}fw-semibold{% else %}text-muted{% endif %}" style="font-size:.875rem;">
+                        Extração
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-semibold" style="font-size:.875rem;">Filtros</span>
+                <a href="{% url 'criar_filtro' fonte.pk %}" class="btn btn-sm btn-outline-primary" style="font-size:.78rem;">+ Filtro</a>
+            </div>
+            {% if fonte.filtros.all %}
+            <div class="list-group list-group-flush">
+                {% for filtro in fonte.filtros.all %}
+                <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-semibold" style="font-size:.875rem;">{{ filtro.nome }}</div>
+                        {% if filtro.detalhes %}
+                        <div style="font-size:.8rem; color:var(--cor-texto-suave);">{{ filtro.detalhes }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-1 ms-2">
+                        <a href="{% url 'editar_filtro' filtro.pk %}" class="btn btn-sm btn-outline-secondary" style="font-size:.75rem; padding:.2rem .5rem;">Editar</a>
+                        <a href="{% url 'excluir_filtro' filtro.pk %}" class="btn btn-sm btn-outline-danger" style="font-size:.75rem; padding:.2rem .5rem;">&#215;</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="mb-0" style="font-size:.83rem; color:var(--cor-texto-suave);">Nenhum filtro cadastrado.</p>
+            {% endif %}
+        </div>
+
+        <!-- Relação de Conexões -->
+        <div class="card p-3">
+            <div class="fw-semibold mb-2" style="font-size:.875rem;">Relação de Conexões</div>
+            {% if fonte.relacao_conexoes %}
+            <pre style="font-size:.83rem; white-space:pre-wrap; margin:0; color:var(--cor-texto);">{{ fonte.relacao_conexoes }}</pre>
+            {% else %}
+            <p class="mb-0" style="font-size:.83rem; color:var(--cor-texto-suave);">Nenhuma descrição cadastrada.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Coluna direita: imagens -->
+    <div class="col-lg-5">
+        <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="fw-semibold" style="font-size:.875rem;">Imagens Anexas</span>
+                <a href="{% url 'adicionar_imagem_fonte' fonte.pk %}" class="btn btn-sm btn-outline-primary" style="font-size:.78rem;">+ Imagem</a>
+            </div>
+
+            {% if fonte.imagens.all %}
+            <!-- Miniaturas -->
+            <div class="d-flex flex-wrap gap-2 mb-3" id="miniaturas">
+                {% for img in fonte.imagens.all %}
+                <div class="miniatura-wrapper position-relative" style="cursor:pointer;" onclick="mostrarPreview('{{ img.imagem.url }}', '{{ img.legenda|default:img.pk }}')">
+                    <img src="{{ img.imagem.url }}" alt="{{ img.legenda }}"
+                         style="width:64px; height:48px; object-fit:cover; border-radius:.375rem; border:2px solid var(--cor-borda);">
+                    <a href="{% url 'excluir_imagem_fonte' img.pk %}"
+                       onclick="event.stopPropagation();"
+                       class="position-absolute top-0 end-0 bg-danger text-white rounded-circle"
+                       style="width:16px;height:16px;font-size:10px;line-height:16px;text-align:center;text-decoration:none;"
+                       title="Excluir">&#215;</a>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Preview -->
+            <div class="fw-semibold mb-2" style="font-size:.8rem; color:var(--cor-texto-suave);">Preview da Imagem</div>
+            <div id="preview-container" style="border:1px solid var(--cor-borda); border-radius:.5rem; overflow:hidden; min-height:180px; display:flex; align-items:center; justify-content:center; background:#f9fafb;">
+                {% with fonte.imagens.first as primeira %}
+                {% if primeira %}
+                <img id="preview-img" src="{{ primeira.imagem.url }}" alt="{{ primeira.legenda }}"
+                     style="max-width:100%; max-height:280px; display:block;">
+                {% else %}
+                <span style="color:var(--cor-texto-suave); font-size:.83rem;">Selecione uma imagem</span>
+                {% endif %}
+                {% endwith %}
+            </div>
+            <div id="preview-legenda" class="mt-1 text-center" style="font-size:.78rem; color:var(--cor-texto-suave);">
+                {% with fonte.imagens.first as primeira %}{{ primeira.legenda|default:"" }}{% endwith %}
+            </div>
+            {% else %}
+            <p class="text-center" style="color:var(--cor-texto-suave); font-size:.83rem;">Nenhuma imagem anexada.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function mostrarPreview(url, legenda) {
+    const img = document.getElementById('preview-img');
+    const leg = document.getElementById('preview-legenda');
+    if (img) { img.src = url; }
+    if (leg) { leg.textContent = legenda; }
+}
+</script>
+{% endblock %}

@@ -12,13 +12,17 @@ class TarefaAgendada(models.Model):
     ]
 
     MODULO_CHOICES = [
-        ('',               '— Selecione —'),
-        ('ambulatorial',   'Ambulatorial'),
-        ('urgencia',       'Urgência'),
-        ('leitos_aih',     'Leitos AIH'),
-        ('leitos',         'Leitos'),
-        ('pre_hospitalar', 'Pré-Hospitalar'),
-        ('indicadores',    'Indicadores'),
+        ('',                 '— Selecione —'),
+        ('ambulatorial',     'Ambulatorial'),
+        ('urgencia',         'Urgência'),
+        ('leitos_aih',       'Leitos AIH'),
+        ('leitos',           'Leitos'),
+        ('pre_hospitalar',   'Pré-Hospitalar'),
+        ('indicadores',      'Indicadores'),
+        ('agendamentos',     'Agendamentos'),
+        ('naep',             'NAEP'),
+        ('nucleo_oncologia', 'Núcleo de Oncologia'),
+        ('oncologia',        'Oncologia'),
     ]
 
     nome = models.CharField(max_length=200)

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block nav_paineis %}active{% endblock %}
+{% block title %}{{ historia.nome }}{% endblock %}
+{% block container_style %}max-width:1140px;{% endblock %}
+
+{% block content %}
+<div class="mb-3" style="font-size:.85rem; color:var(--cor-texto-suave);">
+    <a href="{% url 'lista_projetos' %}" class="text-decoration-none" style="color:var(--cor-texto-suave);">Gestão de Painéis</a>
+    <span class="mx-1">/</span>
+    <a href="{% url 'detalhe_projeto' projeto.pk %}?aba=historias" class="text-decoration-none" style="color:var(--cor-texto-suave);">{{ projeto.nome }}</a>
+    <span class="mx-1">/</span> {{ historia.nome }}
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">{{ historia.nome }}</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'adicionar_imagem_historia' historia.pk %}" class="btn btn-sm btn-primary">+ Imagem</a>
+        <a href="{% url 'editar_historia' historia.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+        <a href="{% url 'excluir_historia' historia.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+        <a href="{% url 'detalhe_projeto' projeto.pk %}?aba=historias" class="btn btn-sm btn-outline-secondary">Voltar</a>
+    </div>
+</div>
+
+{% if historia.descricao %}
+<div class="card p-3 mb-4">
+    <div class="fw-semibold mb-1" style="font-size:.875rem;">Descrição</div>
+    <p class="mb-0" style="font-size:.875rem;">{{ historia.descricao }}</p>
+</div>
+{% endif %}
+
+{% if historia.imagens.all %}
+{% regroup historia.imagens.all by secao as grupos %}
+{% for grupo in grupos %}
+<div class="mb-4">
+    {% if grupo.grouper %}
+    <h5 class="mb-3" style="font-size:.95rem; color:var(--cor-texto);">{{ grupo.grouper }}</h5>
+    {% endif %}
+    <div class="row g-3">
+        {% for img in grupo.list %}
+        <div class="col-md-4">
+            <div class="card p-2 h-100">
+                <img src="{{ img.imagem.url }}" alt="{{ img.legenda }}"
+                     style="width:100%; border-radius:.375rem; object-fit:cover; max-height:200px;">
+                {% if img.legenda %}
+                <p class="mt-2 mb-1 text-center" style="font-size:.8rem; color:var(--cor-texto-suave);">{{ img.legenda }}</p>
+                {% endif %}
+                <div class="text-center mt-1">
+                    <a href="{% url 'excluir_imagem_historia' img.pk %}" class="btn btn-sm btn-outline-danger" style="font-size:.75rem;">Excluir</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="card p-4 text-center" style="color:var(--cor-texto-suave);">
+    <p class="mb-2">Nenhuma imagem cadastrada.</p>
+    <a href="{% url 'adicionar_imagem_historia' historia.pk %}" class="btn btn-primary btn-sm mx-auto" style="width:fit-content;">+ Adicionar imagem</a>
+</div>
+{% endif %}
+{% endblock %}
