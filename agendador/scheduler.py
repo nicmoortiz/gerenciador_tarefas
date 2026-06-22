@@ -6,9 +6,48 @@ scheduler = BackgroundScheduler(timezone='America/Sao_Paulo')
 _lock = threading.Lock()
 
 
-def executar_script(tarefa_id):
-    """Executa o script Python da tarefa e grava o histórico."""
+def _monitorar_processo(proc, tarefa_id, historico_id, timeout=3600):
+    """Aguarda o processo filho e persiste o resultado. Roda em thread daemon."""
     from django.db import close_old_connections
+    from django.utils import timezone as tz
+    from .models import HistoricoExecucao, TarefaAgendada
+
+    stdout, stderr, codigo, status = '', '', -1, 'erro'
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+        codigo = proc.returncode
+        status = 'sucesso' if codigo == 0 else 'erro'
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        stdout, stderr = proc.communicate()
+        stderr = 'Timeout: execução excedeu 1 hora.'
+    except Exception as exc:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+        stderr = str(exc)
+
+    close_old_connections()
+    now = tz.now()
+    HistoricoExecucao.objects.filter(pk=historico_id).update(
+        saida=stdout,
+        erro=stderr,
+        codigo_retorno=codigo,
+        status=status,
+        finalizada_em=now,
+    )
+    TarefaAgendada.objects.filter(pk=tarefa_id).update(ultima_execucao=now)
+
+
+def executar_script(tarefa_id):
+    """Lança o script em processo separado e retorna imediatamente.
+
+    O monitoramento (captura de saída + gravação do histórico) ocorre em
+    uma thread daemon independente, sem bloquear o pool do APScheduler.
+    """
+    from django.db import close_old_connections
+    from django.conf import settings
     from django.utils import timezone
     from .models import TarefaAgendada, HistoricoExecucao
 
@@ -25,32 +64,32 @@ def executar_script(tarefa_id):
         status='rodando',
     )
 
+    caminho = settings.BASE_DIR / tarefa.caminho_script
     try:
-        from django.conf import settings
-        caminho = settings.BASE_DIR / tarefa.caminho_script
-        cmd = ['python', str(caminho)]
-
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
-        historico.saida = result.stdout
-        historico.erro = result.stderr
-        historico.codigo_retorno = result.returncode
-        historico.status = 'sucesso' if result.returncode == 0 else 'erro'
-    except subprocess.TimeoutExpired:
-        historico.status = 'erro'
-        historico.erro = 'Timeout: execução excedeu 1 hora.'
+        proc = subprocess.Popen(
+            ['python', str(caminho)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
     except FileNotFoundError:
         historico.status = 'erro'
         historico.erro = f'Script não encontrado: {tarefa.caminho_script}'
+        historico.finalizada_em = timezone.now()
+        historico.save()
+        return
     except Exception as exc:
         historico.status = 'erro'
         historico.erro = str(exc)
-    finally:
-        from django.utils import timezone as tz
-        historico.finalizada_em = tz.now()
+        historico.finalizada_em = timezone.now()
         historico.save()
-        TarefaAgendada.objects.filter(pk=tarefa_id).update(
-            ultima_execucao=historico.iniciada_em
-        )
+        return
+
+    threading.Thread(
+        target=_monitorar_processo,
+        args=[proc, tarefa_id, historico.pk],
+        daemon=True,
+    ).start()
 
 
 def agendar(tarefa):
