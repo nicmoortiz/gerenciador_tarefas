@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block nav_paineis %}active{% endblock %}
+{% block title %}Painéis{% endblock %}
+{% block container_style %}max-width:1120px;{% endblock %}
+
+{% block content %}
+<section class="paineis-board">
+    <div class="paineis-header">
+        <h2>Painéis</h2>
+        <div class="paineis-actions" aria-label="Ações">
+            <button type="button" title="Visualizar" aria-label="Visualizar">◉</button>
+            <button type="button" title="Adicionar" aria-label="Adicionar">⊕</button>
+            <button type="button" title="Editar" aria-label="Editar">✎</button>
+            <button type="button" title="Excluir" aria-label="Excluir">🗑</button>
+        </div>
+    </div>
+
+    <div class="paineis-table-wrap">
+        <table class="paineis-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Módulo</th>
+                    <th>Caminho Tableau</th>
+                    <th>Desenvolvedor(a)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for painel in paineis %}
+                <tr>
+                    <td>{{ painel.nome }}</td>
+                    <td>{{ painel.modulo }}</td>
+                    <td>{{ painel.caminho_tableau }}</td>
+                    <td>{{ painel.desenvolvedor }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+    .paineis-board {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, .16);
+        padding: 14px 16px 26px;
+    }
+
+    .paineis-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 8px;
+    }
+
+    .paineis-header h2 {
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .paineis-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .paineis-actions button {
+        width: 16px;
+        height: 16px;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        color: #111827;
+        font-size: .85rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .paineis-table-wrap {
+        overflow-x: auto;
+    }
+
+    .paineis-table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        font-size: .78rem;
+    }
+
+    .paineis-table th {
+        height: 30px;
+        background: #d9d9d9;
+        border: 1px solid #d9d9d9;
+        padding: 6px 10px;
+        font-weight: 500;
+        text-align: left;
+    }
+
+    .paineis-table td {
+        height: 37px;
+        border: 1px solid #ddd;
+        background: #fff;
+    }
+
+    .paineis-table th:nth-child(1),
+    .paineis-table td:nth-child(1) {
+        width: 15%;
+    }
+
+    .paineis-table th:nth-child(2),
+    .paineis-table td:nth-child(2) {
+        width: 22%;
+    }
+
+    .paineis-table th:nth-child(3),
+    .paineis-table td:nth-child(3) {
+        width: 34%;
+    }
+
+    .paineis-table th:nth-child(4),
+    .paineis-table td:nth-child(4) {
+        width: 29%;
+    }
+</style>
+{% endblock %}
