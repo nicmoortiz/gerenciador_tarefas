@@ -31,15 +31,24 @@ class TarefaAgendadaForm(forms.ModelForm):
 
     class Meta:
         model = TarefaAgendada
-        fields = ['nome', 'descricao', 'modulo', 'ativa', 'assunto', 'observacoes']
+        fields = ['nome', 'descricao', 'modulo', 'ativa', 'observacoes']
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control'}),
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'required': 'required'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'modulo': forms.Select(attrs={'class': 'form-select', 'style': 'max-width:260px;'}),
+            'modulo': forms.Select(attrs={'class': 'form-select', 'style': 'max-width:260px;', 'required': 'required'}),
             'ativa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'assunto': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Assunto opcional...'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Observações opcionais...'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['modulo'].required = True
+
+    def clean_modulo(self):
+        modulo = self.cleaned_data.get('modulo', '').strip()
+        if not modulo:
+            raise forms.ValidationError('Selecione um módulo.')
+        return modulo
 
     def clean_pasta_script(self):
         pasta = self.cleaned_data.get('pasta_script', '').strip()

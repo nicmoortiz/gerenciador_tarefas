@@ -1,27 +1,79 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block nav_agendador %}active{% endblock %}
-{% block container_style %}max-width:1400px;{% endblock %}
+{% block container_style %}max-width:98%;{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Agendador de Tarefas</h2>
     <a href="{% url 'criar_agendada' %}" class="btn btn-primary btn-sm">+ Novo Agendamento</a>
 </div>
 
+{# ── Filtros ── #}
+<form method="get" class="card p-3 mb-3">
+    <div class="d-flex flex-wrap gap-2 align-items-end">
+        <div>
+            <label class="form-label mb-1" style="font-size:.78rem;">Nome</label>
+            <input type="text" name="nome" class="form-control form-control-sm" style="width:180px;"
+                   placeholder="Buscar..." value="{{ filtro_nome }}">
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.78rem;">Módulo</label>
+            <select name="modulo" class="form-select form-select-sm" style="width:160px;">
+                <option value="">Todos</option>
+                {% for val, label in modulo_choices %}
+                <option value="{{ val }}" {% if filtro_modulo == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.78rem;">Pasta</label>
+            <select name="pasta" class="form-select form-select-sm" style="width:180px;">
+                <option value="">Todas</option>
+                {% for val, label in pasta_choices %}
+                <option value="{{ val }}" {% if filtro_pasta == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.78rem;">Status</label>
+            <select name="status" class="form-select form-select-sm" style="width:130px;">
+                <option value="ativo"   {% if filtro_status == 'ativo'   %}selected{% endif %}>Ativos</option>
+                <option value="inativo" {% if filtro_status == 'inativo' %}selected{% endif %}>Inativos</option>
+                <option value="todos"   {% if filtro_status == 'todos'   %}selected{% endif %}>Todos</option>
+            </select>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            <a href="{% url 'lista_agendadas' %}?status=ativo" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </div>
+</form>
+
 {% if tarefas %}
-<div class="card p-0 overflow-hidden">
-    <table class="table table-hover mb-0" style="font-size:.875rem;">
+<div class="card p-0" style="overflow-x:auto;">
+    <table class="table table-hover mb-0" style="font-size:.875rem; width:100%;">
         <thead style="background:#f3f4f6; font-size:.8rem; color: var(--cor-texto-suave); text-transform:uppercase; letter-spacing:.04em;">
             <tr>
-                <th class="px-3 py-2 fw-semibold" style="width:22%;">Nome</th>
-                <th class="px-3 py-2 fw-semibold" style="width:9%;">Módulo</th>
-                <th class="px-3 py-2 fw-semibold" style="width:12%;">Assunto</th>
-                <th class="px-3 py-2 fw-semibold" style="width:13%;">Agendamento</th>
-                <th class="px-3 py-2 fw-semibold" style="width:11%;">Próxima execução</th>
-                <th class="px-3 py-2 fw-semibold" style="width:11%;">Última execução</th>
-                <th class="px-3 py-2 fw-semibold" style="width:7%;">Status</th>
-                <th class="px-3 py-2 fw-semibold text-end">Ações</th>
+                {% for col, label, w in colunas %}
+                <th class="px-3 py-2 fw-semibold" style="width:{{ w }};">
+                    {% if col %}
+                        {% with f="nome="|add:filtro_nome|add:"&modulo="|add:filtro_modulo|add:"&pasta="|add:filtro_pasta|add:"&status="|add:filtro_status %}
+                        {% if ordem == col %}
+                            {% if direcao == 'asc' %}
+                                <a href="?{{ f }}&ordem={{ col }}&dir=desc" class="col-sort col-sort-ativo">{{ label }} ▲</a>
+                            {% else %}
+                                <a href="?{{ f }}&ordem={{ col }}&dir=asc" class="col-sort col-sort-ativo">{{ label }} ▼</a>
+                            {% endif %}
+                        {% else %}
+                            <a href="?{{ f }}&ordem={{ col }}&dir=asc" class="col-sort">{{ label }}</a>
+                        {% endif %}
+                        {% endwith %}
+                    {% else %}
+                        {{ label }}
+                    {% endif %}
+                </th>
+                {% endfor %}
             </tr>
         </thead>
         <tbody>
@@ -37,7 +89,10 @@
                 {{ t.get_modulo_display|default:"—" }}
             </td>
             <td class="px-3 py-3 text-muted" style="font-size:.82rem;">
-                {{ t.assunto|default:"—" }}
+                {{ t.pasta }}
+            </td>
+            <td class="px-3 py-3 text-muted" style="font-size:.82rem;">
+                {{ t.nome_script }}
             </td>
             <td class="px-3 py-3" style="font-size:.85rem;">
                 {{ t.descricao_agendamento }}
@@ -60,7 +115,7 @@
                 {% endif %}
             </td>
             <td class="px-3 py-3 text-end">
-                <div class="d-flex gap-2 justify-content-end align-items-center">
+                <div class="d-flex gap-1 justify-content-end align-items-center" style="flex-wrap:nowrap;">
                     <a href="{% url 'executar_agora' t.pk %}" class="icone-acao" title="Executar agora">
                         <img src="{% static 'icons/executar.png' %}" alt="Executar">
                     </a>
@@ -96,18 +151,27 @@
 
 {% block extra_js %}
 <style>
+    .col-sort {
+        color: var(--cor-texto-suave);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .col-sort:hover { color: var(--cor-primaria); }
+    .col-sort-ativo { color: var(--cor-primaria); }
+
     .icone-acao {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
+        width: 24px;
+        height: 24px;
         border-radius: .375rem;
         transition: background .15s, transform .1s;
+        flex-shrink: 0;
     }
     .icone-acao img {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
         object-fit: contain;
     }
     .icone-acao:hover {

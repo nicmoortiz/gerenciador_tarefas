@@ -45,7 +45,6 @@ class TarefaAgendada(models.Model):
     dias_mes = models.CharField(max_length=100, blank=True, default='')     # '1,15'
     meses_execucao = models.CharField(max_length=50, blank=True, default='*')  # '1,6,12' ou '*'
 
-    assunto = models.CharField(max_length=200, blank=True)
     observacoes = models.TextField(blank=True)
 
     ativa = models.BooleanField(default=True)
@@ -60,6 +59,17 @@ class TarefaAgendada(models.Model):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def pasta(self):
+        from pathlib import Path
+        partes = Path(self.caminho_script).parts if self.caminho_script else []
+        return partes[1] if len(partes) >= 2 else '—'
+
+    @property
+    def nome_script(self):
+        from pathlib import Path
+        return Path(self.caminho_script).name if self.caminho_script else '—'
 
     def descricao_agendamento(self):
         h = self.horario.strftime('%H:%M') if self.horario else '—'

@@ -12,6 +12,7 @@
     <div class="mb-3">
         <label class="form-label">Módulo</label>
         {{ form.modulo }}
+        {% if form.modulo.errors %}<div class="text-danger small mt-1">{{ form.modulo.errors }}</div>{% endif %}
     </div>
     <div class="mb-3">
         <label class="form-label">{{ form.nome.label }}</label>
@@ -58,7 +59,7 @@
     {# Data de início — visível para todos #}
     <div class="mb-3" id="div-data">
         <label class="form-label" id="label-data">Data de início</label>
-        <input type="date" name="data_inicio" class="form-control" style="max-width:200px;"
+        <input type="date" name="data_inicio" id="input-data" class="form-control" style="max-width:200px;"
             value="{% if tarefa and tarefa.data_inicio %}{{ tarefa.data_inicio|date:'Y-m-d' }}{% endif %}">
         <div class="form-text d-none" id="hint-diasuteis" style="color: var(--cor-aviso);">
             A data de início deve ser um dia útil (segunda a sexta-feira).
@@ -69,7 +70,7 @@
     {# Horário — visível para todos exceto "intervalo" #}
     <div class="mb-3" id="div-horario">
         <label class="form-label" id="label-horario">Horário</label>
-        <input type="text" name="horario" class="form-control" style="max-width:160px;"
+        <input type="text" name="horario" id="input-horario" class="form-control" style="max-width:160px;"
             placeholder="HH:MM" maxlength="5"
             value="{% if tarefa and tarefa.horario %}{{ tarefa.horario|time:'H:i' }}{% else %}08:00{% endif %}">
         {% if erros_agend.horario %}<div class="text-danger small mt-1">{{ erros_agend.horario }}</div>{% endif %}
@@ -135,7 +136,7 @@
         <div class="mb-3">
             <label class="form-label">A cada</label>
             <div class="d-flex align-items-center gap-2">
-                <input type="number" name="intervalo_valor" class="form-control" min="1"
+                <input type="number" name="intervalo_valor" id="intervalo-valor" class="form-control" min="1"
                     style="width:100px;" value="{{ intervalo_valor|default:30 }}">
                 <select name="intervalo_unidade" class="form-select" style="width:140px;">
                     <option value="minutos" {% if intervalo_unidade == 'minutos' %}selected{% endif %}>Minutos</option>
@@ -155,10 +156,6 @@
 
     {# ── Observações ── #}
     <hr class="my-3">
-    <div class="mb-4">
-        <label class="form-label">Assunto <span class="text-muted fw-normal" style="font-size:.8rem;">(opcional)</span></label>
-        {{ form.assunto }}
-    </div>
     <div class="mb-4">
         <label class="form-label">Obs. <span class="text-muted fw-normal" style="font-size:.8rem;">(opcional)</span></label>
         {{ form.observacoes }}
@@ -258,7 +255,7 @@
         mensal: 'Data de início', intervalo: 'Data de início (opcional)',
     };
 
-    /* ── Atualiza visibilidade ────────────────────────────────────────── */
+    /* ── Atualiza visibilidade e required ────────────────────────────── */
     function atualizar(tipo) {
         const c = config[tipo] || config.diario;
 
@@ -271,10 +268,22 @@
 
         document.getElementById('label-data').textContent = labelData[tipo] || 'Data de início';
 
+        // required dinâmico
+        setRequired('input-data',    c.data    && tipo !== 'intervalo');
+        setRequired('input-horario', c.horario);
+        setRequired('intervalo-valor', c.intervalo);
+
         // Marca o label do radio selecionado
         document.querySelectorAll('.tipo-label').forEach(l => l.classList.remove('selecionado'));
         const radio = document.querySelector(`.tipo-radio[value="${tipo}"]`);
         if (radio) radio.closest('.tipo-label').classList.add('selecionado');
+    }
+
+    function setRequired(id, obrigatorio) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (obrigatorio) el.setAttribute('required', 'required');
+        else el.removeAttribute('required');
     }
 
     function toggle(id, visivel) {

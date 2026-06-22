@@ -123,10 +123,69 @@ def _aplicar_agendamento(tarefa, dados):
 
 # ── Agendador ─────────────────────────────────────────────────────────────────
 
+COLUNAS_ORDEM = {
+    'nome':            'nome',
+    'modulo':          'modulo',
+    'pasta':           'caminho_script',
+    'script':          'caminho_script',
+    'agendamento':     'horario',
+    'ultima_execucao': 'ultima_execucao',
+    'status':          'ativa',
+}
+
 def lista_agendadas(request):
-    tarefas = list(TarefaAgendada.objects.all())
+    from .forms import _pasta_choices
+
+    # Filtros
+    filtro_nome   = request.GET.get('nome', '').strip()
+    filtro_modulo = request.GET.get('modulo', '').strip()
+    filtro_pasta  = request.GET.get('pasta', '').strip()
+    filtro_status = request.GET.get('status', 'ativo')  # padrão: apenas ativos
+
+    # Ordenação
+    ordem    = request.GET.get('ordem', 'nome')
+    direcao  = request.GET.get('dir', 'asc')
+    campo_db = COLUNAS_ORDEM.get(ordem, 'nome')
+    prefixo  = '-' if direcao == 'desc' else ''
+
+    qs = TarefaAgendada.objects.all()
+    if filtro_nome:
+        qs = qs.filter(nome__icontains=filtro_nome)
+    if filtro_modulo:
+        qs = qs.filter(modulo=filtro_modulo)
+    if filtro_pasta:
+        qs = qs.filter(caminho_script__icontains=filtro_pasta)
+    if filtro_status == 'ativo':
+        qs = qs.filter(ativa=True)
+    elif filtro_status == 'inativo':
+        qs = qs.filter(ativa=False)
+
+    tarefas = list(qs.order_by(f'{prefixo}{campo_db}'))
     _proximas(tarefas)
-    return render(request, 'agendador/lista.html', {'tarefas': tarefas})
+
+    colunas = [
+        ('nome',            'Nome',             '18%'),
+        ('modulo',          'Módulo',            '8%'),
+        ('pasta',           'Pasta',             '9%'),
+        ('script',          'Script',            '10%'),
+        ('agendamento',     'Agendamento',       '11%'),
+        ('',                'Próxima execução',  '9%'),
+        ('ultima_execucao', 'Última execução',   '9%'),
+        ('status',          'Status',            '6%'),
+        ('',                'Ações',             '200px'),
+    ]
+    return render(request, 'agendador/lista.html', {
+        'tarefas':       tarefas,
+        'ordem':         ordem,
+        'direcao':       direcao,
+        'colunas':       colunas,
+        'filtro_nome':   filtro_nome,
+        'filtro_modulo': filtro_modulo,
+        'filtro_pasta':  filtro_pasta,
+        'filtro_status': filtro_status,
+        'modulo_choices': TarefaAgendada.MODULO_CHOICES[1:],
+        'pasta_choices':  _pasta_choices()[1:],
+    })
 
 
 def criar_agendada(request):
